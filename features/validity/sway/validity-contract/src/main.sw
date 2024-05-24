@@ -15,11 +15,12 @@ enum BytesValue {
     Bool: bool,
     B256: b256,
     U64: u64, 
+    U16: u16,
     String: String,
 }
 
 abi ValidityContract {
-    fn test_read_bytes();
+    fn test_read_bytes() -> (b256,  b256,  bool,  u64,  u16);
 }
 
 impl BytesValue {
@@ -51,6 +52,14 @@ impl BytesValue {
         }
     }
 
+    fn as_u16(self) -> u16 {
+        match self {
+            Self::U16(value) => value,
+            _ => revert(0),
+        }
+    }
+
+  
     
 }
 
@@ -60,6 +69,7 @@ pub struct BakoHandle {
     resolver: b256,
     primary: bool,
     timestamp: u64,
+    period: u16,
 }
 
 
@@ -73,6 +83,7 @@ fn read_bytes(bytes: Bytes) -> (Bytes, BytesValue) {
         2 => BytesValue::B256(b256::try_from(value_bytes).unwrap()),
         3 => BytesValue::Bool(value_bytes.get(0).unwrap() == 1u8),
         4 => BytesValue::U64(u64::from_be_bytes(value_bytes)),
+        5 => BytesValue::U16(u16::from_be_bytes(value_bytes)),
         _ => revert(0),
     };
     return (right, value);
@@ -96,8 +107,11 @@ impl From<Bytes> for BakoHandle {
         let (bytes, value) = read_bytes(bytes);
         let primary = value.as_bool();
 
-        let (_, value) = read_bytes(bytes);
+        let (bytes, value) = read_bytes(bytes);
         let timestamp = value.as_u64();
+
+        let (_, value) = read_bytes(bytes);
+        let period = value.as_u16();
       
         return Self {
             name,
@@ -105,6 +119,7 @@ impl From<Bytes> for BakoHandle {
             resolver,
             primary,
             timestamp,
+            period,
         };
     }
 
@@ -132,7 +147,7 @@ impl From<Bytes> for BakoHandle {
         bytes.push(3u8);
         bytes.push(match self.primary { true => 1u8, false => 0u8, });
 
-
+        
         let mut timestamp_bytes = Bytes::new();
         timestamp_bytes.append(timestamp().to_be_bytes());
 
@@ -140,25 +155,31 @@ impl From<Bytes> for BakoHandle {
         bytes.push(4u8);
         bytes.append(timestamp_bytes);
 
+        // Append bytes representing the period field
+        let period_bytes = self.period.to_be_bytes();
+        bytes.append(period_bytes.len().try_as_u16().unwrap().to_be_bytes());
+        bytes.push(5u8);
+        bytes.append(period_bytes);
 
         return bytes;
     }
 } 
 
 impl BakoHandle {
-    pub fn new(name: String, owner: b256, resolver: b256,  primary: bool, timestamp: u64) -> Self {
+    pub fn new(name: String, owner: b256, resolver: b256,  primary: bool, timestamp: u64, period: u16) -> Self {
         Self {
             name,
             owner,
             resolver,
             primary,
             timestamp,
+            period,
         }
     }
 }
 
 impl ValidityContract for Contract {
-    fn test_read_bytes() {
+    fn test_read_bytes() -> (b256, b256, bool, u64, u16) {
         use std::hash::*;
 
         let my_handle = BakoHandle::new(
@@ -167,6 +188,7 @@ impl ValidityContract for Contract {
             sha256("RESOLVER"),
             true,
             timestamp(),
+            1,
         );
 
         let bytes: Bytes = my_handle.into();
@@ -187,9 +209,15 @@ impl ValidityContract for Contract {
         let is_primary = value.as_bool();
         assert(is_primary == my_handle.primary);
 
-        let (_, value) = read_bytes(bytes);
+        let (bytes, value) = read_bytes(bytes);
         let timestamp = value.as_u64();
         assert(timestamp == my_handle.timestamp);
+
+        let (_, value) = read_bytes(bytes);
+        let period = value.as_u16();
+        assert(period == my_handle.period);
+
+        return (owner, resolver, is_primary, timestamp, period);
     }
 }
 
@@ -205,6 +233,7 @@ fn test_read_bytes() {
         sha256("RESOLVER"),
         true,
         timestamp(),
+        1,
     );
 
     let bytes: Bytes = my_handle.into();
@@ -225,9 +254,13 @@ fn test_read_bytes() {
     let is_primary = value.as_bool();
     assert(is_primary == my_handle.primary);
 
-    let (_, value) = read_bytes(bytes);
+    let (bytes, value) = read_bytes(bytes);
     let timestamp = value.as_u64();
     assert(timestamp == my_handle.timestamp);
+
+    let (_, value) = read_bytes(bytes);
+    let period = value.as_u16();
+    assert(period == my_handle.period);
 }
 
 #[test(should_revert)] 
@@ -240,6 +273,7 @@ fn test_read_invalid_byte_value() {
         sha256("RESOLVER"),
         true,
         timestamp(),
+        1,
     );
     let bytes: Bytes = my_handle.into();
 

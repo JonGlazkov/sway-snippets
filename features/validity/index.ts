@@ -48,7 +48,7 @@ async function main() {
   //   10
   // ).toUnix();
 
-  console.log(listResult.logs);
+  console.log(listResult.value);
   // console.log(new Date(timestamp * 1000));
 }
 

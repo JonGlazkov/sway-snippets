@@ -10,13 +10,20 @@
 */
 
 import type {
+  BigNumberish,
+  BN,
+  Bytes,
   BytesLike,
   Contract,
   DecodedValue,
   FunctionFragment,
   Interface,
   InvokeFunction,
+  StdString,
 } from 'fuels';
+
+export type RawBytesInput = { ptr: BigNumberish, cap: BigNumberish };
+export type RawBytesOutput = { ptr: BN, cap: BN };
 
 interface ValidityContractAbiInterface extends Interface {
   functions: {
@@ -31,6 +38,6 @@ interface ValidityContractAbiInterface extends Interface {
 export class ValidityContractAbi extends Contract {
   interface: ValidityContractAbiInterface;
   functions: {
-    test_read_bytes: InvokeFunction<[], void>;
+    test_read_bytes: InvokeFunction<[], [StdString, string, string, boolean, BN, number]>;
   };
 }

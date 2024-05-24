@@ -17,8 +17,115 @@ const _abi = {
   "types": [
     {
       "typeId": 0,
-      "type": "()",
-      "components": [],
+      "type": "(_, _, _, _, _, _)",
+      "components": [
+        {
+          "name": "__tuple_element",
+          "type": 6,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 1,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 1,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 8,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 7,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 1,
+      "type": "b256",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 2,
+      "type": "bool",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 3,
+      "type": "raw untyped ptr",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 4,
+      "type": "struct Bytes",
+      "components": [
+        {
+          "name": "buf",
+          "type": 5,
+          "typeArguments": null
+        },
+        {
+          "name": "len",
+          "type": 8,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 5,
+      "type": "struct RawBytes",
+      "components": [
+        {
+          "name": "ptr",
+          "type": 3,
+          "typeArguments": null
+        },
+        {
+          "name": "cap",
+          "type": 8,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 6,
+      "type": "struct String",
+      "components": [
+        {
+          "name": "bytes",
+          "type": 4,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 7,
+      "type": "u16",
+      "components": null,
+      "typeParameters": null
+    },
+    {
+      "typeId": 8,
+      "type": "u64",
+      "components": null,
       "typeParameters": null
     }
   ],

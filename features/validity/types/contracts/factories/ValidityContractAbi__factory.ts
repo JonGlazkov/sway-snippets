@@ -4,7 +4,7 @@
 /* eslint-disable */
 
 /*
-  Fuels version: 0.79.0
+  Fuels version: 0.81.0
   Forc version: 0.49.3
   Fuel-Core version: 0.22.1
 */
@@ -17,21 +17,17 @@ const _abi = {
   "types": [
     {
       "typeId": 0,
-      "type": "(_, _, _, _, _, _)",
+      "type": "()",
+      "components": [],
+      "typeParameters": null
+    },
+    {
+      "typeId": 1,
+      "type": "(_, _, _, _, _)",
       "components": [
         {
           "name": "__tuple_element",
-          "type": 6,
-          "typeArguments": null
-        },
-        {
-          "name": "__tuple_element",
-          "type": 1,
-          "typeArguments": null
-        },
-        {
-          "name": "__tuple_element",
-          "type": 1,
+          "type": 2,
           "typeArguments": null
         },
         {
@@ -41,47 +37,56 @@ const _abi = {
         },
         {
           "name": "__tuple_element",
-          "type": 8,
+          "type": 3,
           "typeArguments": null
         },
         {
           "name": "__tuple_element",
-          "type": 7,
+          "type": 10,
+          "typeArguments": null
+        },
+        {
+          "name": "__tuple_element",
+          "type": 9,
           "typeArguments": null
         }
       ],
       "typeParameters": null
     },
     {
-      "typeId": 1,
+      "typeId": 2,
       "type": "b256",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 2,
+      "typeId": 3,
       "type": "bool",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 3,
-      "type": "raw untyped ptr",
-      "components": null,
-      "typeParameters": null
-    },
-    {
       "typeId": 4,
-      "type": "struct Bytes",
+      "type": "enum ValidyContractError",
       "components": [
         {
-          "name": "buf",
-          "type": 5,
+          "name": "DomainAlreadyRegistered",
+          "type": 0,
           "typeArguments": null
         },
         {
-          "name": "len",
-          "type": 8,
+          "name": "DomainNotRegistered",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "DomainExpired",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "DomainUnavailable",
+          "type": 0,
           "typeArguments": null
         }
       ],
@@ -89,28 +94,22 @@ const _abi = {
     },
     {
       "typeId": 5,
-      "type": "struct RawBytes",
-      "components": [
-        {
-          "name": "ptr",
-          "type": 3,
-          "typeArguments": null
-        },
-        {
-          "name": "cap",
-          "type": 8,
-          "typeArguments": null
-        }
-      ],
+      "type": "raw untyped ptr",
+      "components": null,
       "typeParameters": null
     },
     {
       "typeId": 6,
-      "type": "struct String",
+      "type": "struct Bytes",
       "components": [
         {
-          "name": "bytes",
-          "type": 4,
+          "name": "buf",
+          "type": 7,
+          "typeArguments": null
+        },
+        {
+          "name": "len",
+          "type": 10,
           "typeArguments": null
         }
       ],
@@ -118,12 +117,41 @@ const _abi = {
     },
     {
       "typeId": 7,
+      "type": "struct RawBytes",
+      "components": [
+        {
+          "name": "ptr",
+          "type": 5,
+          "typeArguments": null
+        },
+        {
+          "name": "cap",
+          "type": 10,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 8,
+      "type": "struct String",
+      "components": [
+        {
+          "name": "bytes",
+          "type": 6,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 9,
       "type": "u16",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 8,
+      "typeId": 10,
       "type": "u64",
       "components": null,
       "typeParameters": null
@@ -131,17 +159,142 @@ const _abi = {
   ],
   "functions": [
     {
-      "inputs": [],
-      "name": "test_read_bytes",
+      "inputs": [
+        {
+          "name": "domain_name",
+          "type": 8,
+          "typeArguments": null
+        }
+      ],
+      "name": "register_domain",
       "output": {
         "name": "",
         "type": 0,
         "typeArguments": null
       },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "test_read_bytes",
+      "output": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      },
+      "attributes": null
+    },
+    {
+      "inputs": [],
+      "name": "test_verify_grace_period",
+      "output": {
+        "name": "",
+        "type": 3,
+        "typeArguments": null
+      },
+      "attributes": null
+    },
+    {
+      "inputs": [],
+      "name": "test_verify_grace_period_expired",
+      "output": {
+        "name": "",
+        "type": 3,
+        "typeArguments": null
+      },
       "attributes": null
     }
   ],
-  "loggedTypes": [],
+  "loggedTypes": [
+    {
+      "logId": 0,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 1,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 2,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 3,
+      "loggedType": {
+        "name": "",
+        "type": 4,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": 4,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 5,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 6,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 7,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 8,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    },
+    {
+      "logId": 9,
+      "loggedType": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      }
+    }
+  ],
   "messagesTypes": [],
   "configurables": []
 };

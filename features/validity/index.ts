@@ -1,4 +1,5 @@
 import { Provider, Wallet } from "fuels";
+import { TAI64 } from "tai64";
 import { ValidityContractAbi__factory } from "./types";
 import { validityContract } from "./types/contract-ids.json";
 
@@ -38,18 +39,51 @@ async function main() {
     gasLimit: 2_000_000,
   };
 
-  const listResult = await contractAbi.functions
-    .test_read_bytes()
-    .txParams(txParams)
-    .call();
+  try {
+    // const listResult = await contractAbi.functions
+    //   .test_verify_grace_period()
+    //   .txParams(txParams)
+    //   .call();
+    const domain = await contractAbi.functions
+      .register_domain("mydomain")
+      .txParams(txParams)
+      .call();
 
-  // const timestamp = TAI64.fromString(
-  //   listResult.value[3].toString(),
-  //   10
-  // ).toUnix();
+    // const timestamp = TAI64.fromString(
+    //   listResult.logs[1].toString(),
+    //   10
+    // ).toUnix();
 
-  console.log(listResult.value);
-  // console.log(new Date(timestamp * 1000));
+    // console.log(timestamp);
+    // console.log(new Date(timestamp * 1000));
+    // const [currentTimestamp, calculatedTimestamp] = domain.logs;
+    // console.log({
+    //   currentTimestamp: TAI64.fromString(
+    //     currentTimestamp.toString(),
+    //     10
+    //   ).toUnix(),
+    //   calculatedTimestamp: TAI64.fromString(
+    //     calculatedTimestamp.toString(),
+    //     10
+    //   ).toUnix(),
+    // });
+  } catch (error) {
+    const [currentTimestamp, handleTimestamp, gracePeriod, why] =
+      error.metadata.logs;
+    // console.log(error.metadata);
+    console.log({
+      currentTimestamp: TAI64.fromString(
+        currentTimestamp.toString(),
+        10
+      ).toUnix(),
+      handleTimestamp: TAI64.fromString(
+        handleTimestamp.toString(),
+        10
+      ).toUnix(),
+      gracePeriod: TAI64.fromString(gracePeriod.toString(), 10).toUnix(),
+      error: why,
+    });
+  }
 }
 
 // 1000000

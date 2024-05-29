@@ -5,10 +5,15 @@ use std::{
     convert::From,
     string::String,
     block::timestamp,
+    storage::storage_map::*,
     bytes_conversions::{u16::*, u64::*},
     primitive_conversions::{ u64::*, b256::* },
     intrinsics::{size_of, size_of_val},
+    hash::*,
+    storage::storage_bytes::*,
+    storage::storage_string::*,
 };
+
 
 
 enum BytesValue {
@@ -21,6 +26,11 @@ enum BytesValue {
 
 abi ValidityContract {
     fn test_read_bytes() -> (b256,  b256,  bool,  u64,  u16);
+    fn test_verify_grace_period() -> bool;
+    fn test_verify_grace_period_expired() -> bool;
+    
+    #[storage(read, write)]
+    fn register_domain(domain_name: String);
 }
 
 impl BytesValue {
@@ -89,6 +99,29 @@ fn read_bytes(bytes: Bytes) -> (Bytes, BytesValue) {
     return (right, value);
 }
 
+fn verify_grace_period(handle: BakoHandle) -> bool {
+    let current_timestamp = timestamp();   
+
+    let handle_timestamp: u64 = handle.timestamp;
+    let handle_period: u16 = handle.period;
+
+    let grace_period_90days: u64 = 90 * 24 * 3600;  // 90 days * 24 hours/day * 3600 seconds/hour = 7776000 seconds
+    let grace_period = handle_timestamp + handle_period.as_u64() + grace_period_90days;
+
+    log(current_timestamp);
+    log(handle_timestamp);
+    log(grace_period);
+
+    return grace_period > current_timestamp;
+}
+
+fn msgsender_address() -> Address {
+    match std::auth::msg_sender().unwrap() {
+        Identity::Address(identity) => identity,
+        _ => revert(0),
+    }
+}
+
 impl From<Bytes> for BakoHandle {
     fn from(bytes: Bytes) -> Self {
         // Get the name length and name bytes
@@ -149,7 +182,8 @@ impl From<Bytes> for BakoHandle {
 
         
         let mut timestamp_bytes = Bytes::new();
-        timestamp_bytes.append(timestamp().to_be_bytes());
+        let timestamp_number = self.timestamp;
+        timestamp_bytes.append(timestamp_number.to_be_bytes());
 
         bytes.append(timestamp_bytes.len().try_as_u16().unwrap().to_be_bytes());
         bytes.push(4u8);
@@ -176,9 +210,63 @@ impl BakoHandle {
             period,
         }
     }
+
+    pub fn is_expired(self) -> bool {
+        let current_timestamp = timestamp();   
+        let year_in_seconds: u64 = 365 * 24 * 3600;  // 365 days * 24 hours/day * 3600 seconds/hour = 31.536.000 seconds
+        let grace_period_90days: u64 = 90 * 24 * 3600;  // 90 days * 24 hours/day * 3600 seconds/hour = 7.776.000 seconds
+
+        let handle_timestamp: u64 = self.timestamp;
+        let handle_period: u16 = self.period;
+
+        let grace_period = handle_timestamp + (handle_period.as_u64() * year_in_seconds) + grace_period_90days;
+
+        log(current_timestamp);
+        log(handle_timestamp);
+        log(grace_period);
+
+        // Check if the current timestamp is greater than the grace period, if so, the domain is expired
+        return grace_period > current_timestamp;
+    } 
+}
+
+storage {
+  domains: StorageMap<b256, StorageBytes> = StorageMap {}
+}
+
+
+enum ValidyContractError {
+    DomainUnavailable: (),
 }
 
 impl ValidityContract for Contract {
+    
+    #[storage(read, write)]
+    fn register_domain(domain_name: String) {
+        let address = msgsender_address();
+        let handle = sha256(domain_name);
+        let current_timestamp = timestamp();
+        
+        let domain = storage.domains.get(handle).read_slice();
+
+        if domain.is_some(){
+            let handle = BakoHandle::from(domain.unwrap());
+            require(!handle.is_expired(), ValidyContractError::DomainUnavailable); // If expired it is unavailable
+        }
+
+        let retrived_domain = BakoHandle::new(
+            domain_name,
+            sha256(address),
+            sha256(address),
+            true,
+            current_timestamp, 
+            1,
+        );
+
+        storage.domains.insert(handle, StorageBytes {});
+        storage.domains.get(handle).write_slice(retrived_domain.into());
+    }
+
     fn test_read_bytes() -> (b256, b256, bool, u64, u16) {
         use std::hash::*;
 
@@ -219,6 +307,35 @@ impl ValidityContract for Contract {
 
         return (owner, resolver, is_primary, timestamp, period);
     }
+
+    fn test_verify_grace_period() -> bool {
+        use std::hash::*;
+        let handle = BakoHandle::new(
+            String::from_ascii_str("myhandle"),
+            sha256("OWNER"),
+            sha256("RESOLVER"),
+            true,
+            timestamp(),
+            1,
+        );
+
+        return verify_grace_period(handle);
+    }
+
+    fn test_verify_grace_period_expired() -> bool {
+        use std::hash::*;
+        let handle = BakoHandle::new(
+            String::from_ascii_str("myhandle"),
+            sha256("OWNER"),
+            sha256("RESOLVER"),
+            true,
+            timestamp() - 91 * 24 * 3600,
+            1,
+        );
+
+        return verify_grace_period(handle);
+    }
+
 }
 
 
@@ -279,4 +396,43 @@ fn test_read_invalid_byte_value() {
 
     let (bytes, value) = read_bytes(bytes);
     let name = value.as_b256();
+}
+
+#[test]
+fn test_verify_grace_period() {
+    use std::hash::*;
+    let handle = BakoHandle::new(
+        String::from_ascii_str("myhandle"),
+        sha256("OWNER"),
+        sha256("RESOLVER"),
+        true,
+        timestamp(),
+        1,
+    );
+
+    assert(verify_grace_period(handle) == true);
+}
+
+#[test]
+fn test_verify_grace_period_expired() {
+    use std::hash::*;
+    let handle = BakoHandle::new(
+        String::from_ascii_str("myhandle"),
+        sha256("OWNER"),
+        sha256("RESOLVER"),
+        true,
+        timestamp() - 90 * 24 * 3601,
+        1,
+    );
+
+    assert(verify_grace_period(handle) == false);
+}
+
+#[test]
+fn test_register_domain() {
+    use std::constants::*;
+
+    let test = abi(ValidityContract, ZERO_B256);
+
+    let _ = test.register_domain(String::from_ascii_str("mydomain"));
 }

@@ -3,9 +3,12 @@
     "./**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
   ],
   "compilerOptions": {
     "resolveJsonModule": true,
+    "lib": [
+      "ES2015"
+    ]
   }
 }
